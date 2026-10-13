@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe Multiplayer — Lobby de Salas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header Padrão -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <span class="grid-icon">▦</span>
+        <div class="title-group">
+          <h1>TIC-TAC-TOE MULTIPLAYER</h1>
+          <span class="subtitle">LOBBY DE SALAS</span>
+        </div>
+      </div>
+      <div class="server-badge">
+        <span class="status-dot"></span>
+        <span>SERVIDOR ONLINE (<span id="active-rooms-count">0</span> SALAS ATIVAS)</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="lobby-grid">
+      <!-- Coluna Esquerda: Pareamento / Criação -->
+      <section class="card action-card">
+        <div class="card-header">
+          <span class="card-icon">⚡</span>
+          <h2>PARTIDA RÁPIDA (MATCHMAKING)</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="form-group">
+            <label for="player-name">Seu Apelido de Jogador:</label>
+            <input type="text" id="player-name" placeholder="Ex: Joao_Gamer" maxlength="20" autofocus>
+          </div>
+
+          <button id="btn-create-room" class="btn btn-green">
+            <span>CRIAR NOVA SALA (GERAR CÓDIGO)</span>
+          </button>
+
+          <div class="divider"><span>OU ENTRAR COM CÓDIGO</span></div>
+
+          <div class="form-group inline-form">
+            <input type="text" id="room-code-input" placeholder="Código (ex: ABC123)" maxlength="6">
+            <button id="btn-join-code" class="btn btn-blue">Entrar na Sala</button>
+          </div>
+
+          <div id="lobby-feedback" class="feedback-msg hidden"></div>
+
+          <!-- Card de Sala Criada / Aguardando Oponente -->
+          <div id="waiting-room-card" class="waiting-card hidden">
+            <div class="waiting-header">
+              <span class="status-dot"></span>
+              <strong>SALA CRIADA COM SUCESSO!</strong>
+            </div>
+            <p>Compartilhe este código com seu amigo:</p>
+            <div class="room-code-display">
+              <span id="created-room-code">------</span>
+              <button id="btn-copy-code" class="btn btn-sm btn-secondary" title="Copiar código">📋 Copiar</button>
+            </div>
+            <div class="waiting-anim">
+              <span class="spinner"></span>
+              <span>Aguardando oponente entrar na sala...</span>
+            </div>
+            <button id="btn-cancel-room" class="btn btn-outline-danger btn-sm" style="margin-top: 10px;">Cancelar Sala</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coluna Direita: Salas Públicas -->
+      <section class="card list-card">
+        <div class="card-header">
+          <span class="card-icon">📊</span>
+          <h2>SALAS PÚBLICAS DISPONÍVEIS</h2>
+        </div>
+
+        <div class="card-body table-container">
+          <table class="rooms-table">
+            <thead>
+              <tr>
+                <th>CÓDIGO</th>
+                <th>HOST</th>
+                <th>VAGAS</th>
+                <th>AÇÃO</th>
+              </tr>
+            </thead>
+            <tbody id="rooms-tbody">
+              <tr>
+                <td colspan="4" class="empty-state">Nenhuma sala aguardando oponente no momento. Crie uma!</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="client.js"></script>
+</body>
+</html>

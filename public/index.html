@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe Multiplayer — WebSocket</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header Padrão -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <span class="grid-icon">▦</span>
+        <div class="title-group">
+          <h1>TIC-TAC-TOE MULTIPLAYER</h1>
+          <span class="subtitle" id="header-subtitle">LOBBY DE SALAS</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="server-badge" id="lobby-server-badge">
+          <span class="status-dot"></span>
+          <span>SERVIDOR ONLINE (<span id="active-rooms-count">0</span> SALAS ATIVAS)</span>
+        </div>
+        <button id="btn-leave-room" class="btn btn-outline-danger hidden">Sair da Sala</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SEÇÃO 1: LOBBY -->
+  <main id="section-lobby" class="container">
+    <div class="lobby-grid">
+      <!-- Coluna Esquerda: Pareamento / Criação -->
+      <section class="card action-card">
+        <div class="card-header">
+          <span class="card-icon">⚡</span>
+          <h2>PARTIDA RÁPIDA (MATCHMAKING)</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="form-group">
+            <label for="player-name">Seu Apelido de Jogador:</label>
+            <input type="text" id="player-name" placeholder="Ex: Joao_Gamer" maxlength="20" autofocus>
+          </div>
+
+          <button id="btn-create-room" class="btn btn-green">
+            <span>CRIAR NOVA SALA (GERAR CÓDIGO)</span>
+          </button>
+
+          <div class="divider"><span>OU ENTRAR COM CÓDIGO</span></div>
+
+          <div class="form-group inline-form">
+            <input type="text" id="room-code-input" placeholder="Código (ex: ABC123)" maxlength="6">
+            <button id="btn-join-code" class="btn btn-blue">Entrar na Sala</button>
+          </div>
+
+          <div id="lobby-feedback" class="feedback-msg hidden"></div>
+
+          <!-- Card de Sala Criada / Aguardando Oponente -->
+          <div id="waiting-room-card" class="waiting-card hidden">
+            <div class="waiting-header">
+              <span class="status-dot"></span>
+              <strong>SALA CRIADA COM SUCESSO!</strong>
+            </div>
+            <p>Compartilhe este código com seu amigo:</p>
+            <div class="room-code-display">
+              <span id="created-room-code">------</span>
+              <button id="btn-copy-code" class="btn btn-sm btn-secondary" title="Copiar código">📋 Copiar</button>
+            </div>
+            <div class="waiting-anim">
+              <span class="spinner"></span>
+              <span>Aguardando oponente entrar na sala...</span>
+            </div>
+            <button id="btn-cancel-room" class="btn btn-outline-danger btn-sm" style="margin-top: 10px;">Cancelar Sala</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coluna Direita: Salas Públicas -->
+      <section class="card list-card">
+        <div class="card-header">
+          <span class="card-icon">📊</span>
+          <h2>SALAS PÚBLICAS DISPONÍVEIS</h2>
+        </div>
+
+        <div class="card-body table-container">
+          <table class="rooms-table">
+            <thead>
+              <tr>
+                <th>CÓDIGO</th>
+                <th>HOST</th>
+                <th>VAGAS</th>
+                <th>AÇÃO</th>
+              </tr>
+            </thead>
+            <tbody id="rooms-tbody">
+              <tr>
+                <td colspan="4" class="empty-state">Nenhuma sala aguardando oponente no momento. Crie uma!</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- SEÇÃO 2: ARENA DE JOGO (TELA 2) -->
+  <main id="section-arena" class="container arena-container hidden">
+    <!-- Placar Superior (Scoreboard) -->
+    <div class="scoreboard-card">
+      <div class="player-score-block host-score">
+        <div class="symbol-badge badge-x" id="badge-host-symbol">X</div>
+        <div class="score-info">
+          <span class="player-name-label" id="score-host-name">Host</span>
+          <span class="score-number" id="score-host-val">0</span>
+        </div>
+      </div>
+
+      <div class="versus-badge">VS</div>
+
+      <div class="player-score-block guest-score">
+        <div class="score-info guest-info">
+          <span class="player-name-label" id="score-guest-name">Visitante</span>
+          <span class="score-number" id="score-guest-val">0</span>
+        </div>
+        <div class="symbol-badge badge-o" id="badge-guest-symbol">O</div>
+      </div>
+    </div>
+
+    <!-- Turn Banner com Cronômetro de 15 segundos -->
+    <div id="turn-banner" class="turn-banner waiting">
+      <span id="turn-banner-icon">⏳</span>
+      <span id="turn-banner-text">Aguardando início...</span>
+      <span id="turn-timer-tag" class="timer-tag hidden">15s</span>
+    </div>
+
+    <div class="arena-grid">
+      <!-- Tabuleiro 3x3 -->
+      <section class="game-section">
+        <div class="board-wrapper">
+          <div class="board" id="board">
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+          </div>
+        </div>
+        <div class="my-role-indicator">
+          Você está jogando como: <strong id="my-symbol-display">-</strong> (<span id="my-name-display">-</span>)
+        </div>
+      </section>
+
+      <!-- Chat Lateral Integrado (RF-06) -->
+      <aside class="chat-section">
+        <div class="chat-card">
+          <div class="chat-header">
+            <span>💬 CHAT DA PARTIDA</span>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg system">
+              <span class="chat-text">Bem-vindo à sala! O chat é restrito aos dois jogadores.</span>
+            </div>
+          </div>
+          <form id="chat-form" class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Digite sua mensagem..." maxlength="120" autocomplete="off">
+            <button type="submit" id="btn-send-chat" class="btn btn-blue">Enviar</button>
+          </form>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Modal de Fim de Jogo - Game Over (tela3-gameover.html integrado) -->
+  <div id="game-over-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-icon" id="modal-icon">🏆</div>
+      <h2 id="modal-title" class="modal-title">FIM DE JOGO</h2>
+      <p id="modal-subtitle" class="modal-subtitle">Resultado final da rodada</p>
+
+      <div class="modal-stats">
+        <div class="modal-stat-box">
+          <span class="stat-label">Placar da Série</span>
+          <span class="stat-value" id="modal-scoreboard">0 x 0</span>
+        </div>
+        <div class="modal-stat-box">
+          <span class="stat-label">Tempo de Partida</span>
+          <span class="stat-value" id="modal-match-duration">00:45</span>
+        </div>
+      </div>
+
+      <div id="rematch-status" class="rematch-status-msg hidden"></div>
+
+      <div class="modal-actions">
+        <button id="btn-request-rematch" class="btn btn-green">Solicitar Revanche [WS]</button>
+        <button id="btn-return-lobby" class="btn btn-secondary">Voltar ao Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="client.js"></script>
+</body>
+</html>
